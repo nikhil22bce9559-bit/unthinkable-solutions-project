@@ -4,6 +4,9 @@ A smart task planner that transforms high-level goals into comprehensive, action
 
 This project was built for the UNTHINKABLE SOLUTIONS placement assignment. It uses a FastAPI backend and a dynamic JavaScript frontend to generate a complete project plan, including a visual Gantt chart, in real-time.
 
+![Demo GIF](https://github.com/nikhil22bce9559-bit/unthinkable-solutions-project/blob/main/ProjectGenesisEngine-GoogleChrome2025-10-1501-45-56-ezgif.com-video-to-gif-converter.gif)
+
+## 🌟 Core Features
 
 🌟 Core Features
 
