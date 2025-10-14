@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Genesis Engine</title>
+    <!-- This is the library that will draw our Gantt chart -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        /* This is the CSS for styling. It makes the page look modern and professional. */
+        :root { 
+            --primary-color: #4A90E2; 
+            --bg-color: #F4F7FC; 
+            --text-color: #333; 
+            --card-bg: #FFFFFF; 
+            --border-color: #E0E0E0;
+        }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            margin: 0; 
+            padding: 2rem; 
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: auto; 
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 2rem; 
+        }
+        h1 { 
+            color: var(--primary-color); 
+            font-weight: 600;
+        }
+        .form-container { 
+            background: var(--card-bg); 
+            padding: 2rem; 
+            border-radius: 8px; 
+            box-shadow: 0 4px H20px rgba(0,0,0,0.08); 
+        }
+        input[type="text"] { 
+            width: calc(100% - 24px); 
+            padding: 12px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 4px; 
+            font-size: 1rem;
+        }
+        button { 
+            background-color: var(--primary-color); 
+            color: white; 
+            padding: 12px 20px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 1rem; 
+            font-weight: 500;
+            transition: background-color 0.3s ease; 
+        }
+        button:hover { 
+            background-color: #357ABD; 
+        }
+        button:disabled {
+            background-color: #9dbde0;
+            cursor: not-allowed;
+        }
+        .dashboard { 
+            display: none; 
+            margin-top: 2rem; 
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .task-card { 
+            background: var(--card-bg); 
+            margin-bottom: 1rem; 
+            padding: 1.5rem; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+            border-left: 5px solid; 
+        }
+        /* These classes color-code the tasks by priority */
+        .priority-High { border-color: #D0021B; }
+        .priority-Medium { border-color: #F5A623; }
+        .priority-Low { border-color: #4A90E2; }
+        .category-tag { 
+            display: inline-block;
+            background-color: #eee; 
+            color: #555; 
+            padding: 0.2rem 0.6rem; 
+            border-radius: 12px; 
+            font-size: 0.8rem; 
+            font-weight: 500;
+            margin-left: 10px;
+        }
+        h3 {
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Project Genesis Engine 🚀</h1>
+            <p>Turn ambitious goals into actionable project dashboards.</p>
+        </div>
+
+        <div class="form-container">
+            <form id="goal-form">
+                <input type="text" id="goal" placeholder="Your Goal (e.g., Launch a mobile app)" required><br><br>
+                <input type="text" id="timeline" placeholder="Your Timeline (e.g., in 4 months)" required><br><br>
+                <button type="submit" id="generate-btn">Generate Project</button>
+            </form>
+        </div>
+
+        <!-- The Dashboard is hidden until we have a plan -->
+        <div id="dashboard" class="dashboard">
+            <h2 id="plan-title"></h2>
+            <h3>📋 Task Breakdown</h3>
+            <div id="task-list"></div>
+            <h3>📊 Project Timeline (Gantt Chart)</h3>
+            <!-- The Mermaid library will render a chart here -->
+            <pre class="mermaid" id="gantt-chart"></pre>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Mermaid.js for the Gantt Chart
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+
+        // Get references to the HTML elements we need to interact with
+        const form = document.getElementById('goal-form');
+        const dashboard = document.getElementById('dashboard');
+        const planTitle = document.getElementById('plan-title');
+        const taskList = document.getElementById('task-list');
+        const ganttChart = document.getElementById('gantt-chart');
+        const generateBtn = document.getElementById('generate-btn');
+
+        // This function runs when the "Generate Project" button is clicked
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevents the page from reloading
+            
+            generateBtn.disabled = true;
+            generateBtn.textContent = '🧠 Generating...';
+            dashboard.style.display = 'none';
+
+            // Send the user's goal and timeline to our backend API
+            const response = await fetch('http://127.0.0.1:8000/generate-master-plan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    goal: document.getElementById('goal').value,
+                    timeline: document.getElementById('timeline').value
+                })
+            });
+
+            if (!response.ok) {
+                alert('An error occurred. Please check if the backend is running and try again.');
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'Generate Project';
+                return;
+            }
+            
+            const data = await response.json(); // Get the JSON plan from the backend
+            renderDashboard(data); // Call the function to display the plan
+            
+            generateBtn.disabled = false;
+            generateBtn.textContent = 'Generate Project';
+        });
+
+        function renderDashboard(data) {
+            planTitle.textContent = `Project Plan: ${data.goal}`;
+            
+            // --- Render Task Cards ---
+            taskList.innerHTML = ''; // Clear any old results
+            data.project_plan.forEach(task => {
+                const dependenciesText = task.dependencies.length > 0 ? `Dependencies: #${task.dependencies.join(', #')}` : 'No dependencies';
+                // Create an HTML card for each task
+                const card = `
+                    <div class="task-card priority-${task.priority}">
+                        <h4>${task.id}. ${task.task_name} <span class="category-tag">${task.category}</span></h4>
+                        <p>${task.description}</p>
+                        <p><strong>Deliverable:</strong> ${task.deliverable}</p>
+                        <p><em>Timeline: ${task.start_date} to ${task.end_date} | ${dependenciesText}</em></p>
+                    </div>
+                `;
+                taskList.innerHTML += card;
+            });
+
+            // --- Render Gantt Chart ---
+            // Mermaid.js requires a specific text format to draw a chart. We build that text here.
+            let ganttText = `gantt\ndateFormat YYYY-MM-DD\ntitle Project Timeline\n\n`;
+            
+            const categories = [...new Set(data.project_plan.map(task => task.category))];
+            categories.forEach(category => {
+                ganttText += `section ${category}\n`;
+                data.project_plan.filter(task => task.category === category).forEach(task => {
+                    ganttText += `${task.task_name} :task${task.id}, ${task.start_date}, ${task.end_date}\n`;
+                });
+            });
+
+            ganttChart.innerHTML = ganttText; // Put the text into the <pre> tag
+            ganttChart.removeAttribute('data-processed'); // Tell Mermaid it needs to re-render
+            mermaid.init(undefined, ganttChart); // Re-render the Gantt chart
+
+            // Make the dashboard visible with a nice fade-in effect
+            dashboard.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
